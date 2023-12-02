@@ -63,6 +63,7 @@ class Main extends Sprite
 		#if html5
 		framerate = 60; //the web cannot take 120 fps, it can only take 60 fps. 
 		#end
+		super();
 	} 
 
 	public static function framerateAdjust(input:Float)
