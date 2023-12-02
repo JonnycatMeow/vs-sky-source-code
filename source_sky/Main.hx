@@ -14,7 +14,7 @@ import openfl.display.Sprite;
 import openfl.events.Event;
 
 class Main extends Sprite
-{
+{       //variables 
 	var gameWidth:Int = 1280; // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
 	var gameHeight:Int = 720; // Height of the game in pixels (might be less / more in actual pixels depending on your zoom).
 	var initialState:Class<FlxState> = EndingState; // The FlxState the game starts with.
@@ -22,7 +22,8 @@ class Main extends Sprite
 	var framerate:Int = 120; // How many frames per second the game should run at.
 	var skipSplash:Bool = true; // Whether to skip the flixel splash screen that appears in release mode.
 	var startFullscreen:Bool = false; // Whether to start the game in fullscreen on desktop targets
-
+        var game:FlxGame; 
+	var fpsCounter:FPS;
 	// You can pretty much ignore everything from here on - your code should go in your states.
 
 	public static function main():Void
@@ -31,30 +32,6 @@ class Main extends Sprite
 	}
 
 	public function new()
-	{
-		super();
-
-		if (stage != null)
-		{
-			init();
-		}
-		else
-		{
-			addEventListener(Event.ADDED_TO_STAGE, init);
-		}
-	}
-
-	private function init(?E:Event):Void
-	{
-		if (hasEventListener(Event.ADDED_TO_STAGE))
-		{
-			removeEventListener(Event.ADDED_TO_STAGE, init);
-		}
-
-		setupGame();
-	}
-
-	private function setupGame():Void
 	{
 		var stageWidth:Int = Lib.current.stage.stageWidth;
 		var stageHeight:Int = Lib.current.stage.stageHeight;
@@ -81,11 +58,49 @@ class Main extends Sprite
 		addChild(fpsCounter);
 		toggleFPS(FlxG.save.data.fps);
 		#end
+			
+		#if html5
+		framerate = 60; //the web cannot take 120 fps, it can only take 60 fps. 
+		#end
+	} 
+
+	public static function framerateAdjust(input:Float)
+	{
+		return input * (60 / FlxG.drawFramerate);
 	}
-
-	var game:FlxGame;
-
-	var fpsCounter:FPS;
+	
+	public static function updateFramerate(newFramerate:Int)
+	{
+		// flixel will literally throw errors at me if I dont separate the orders
+		if (newFramerate > FlxG.updateFramerate)
+		{
+			FlxG.updateFramerate = newFramerate;
+			FlxG.drawFramerate = newFramerate;
+		}
+		else
+		{
+			FlxG.drawFramerate = newFramerate;
+			FlxG.updateFramerate = newFramerate;
+		}
+	}
+        //dumps the cache for the songs 
+	public static function dumpCache()
+	{
+		///* SPECIAL THANKS TO HAYA
+		@:privateAccess
+		for (key in FlxG.bitmap._cache.keys())
+		{
+			var obj = FlxG.bitmap._cache.get(key);
+			if (obj != null)
+			{
+				Assets.cache.removeBitmapData(key);
+				FlxG.bitmap._cache.remove(key);
+				obj.destroy();
+			}
+		}
+		Assets.cache.clear("songs");
+		// */
+	}
 
 	public function toggleFPS(fpsEnabled:Bool):Void {
 		fpsCounter.visible = fpsEnabled;
